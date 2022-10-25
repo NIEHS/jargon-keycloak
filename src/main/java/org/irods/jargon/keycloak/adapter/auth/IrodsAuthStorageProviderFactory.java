@@ -23,7 +23,7 @@ public class IrodsAuthStorageProviderFactory implements UserStorageProviderFacto
 
 	@Override
 	public IrodsAuthStorageProvider create(KeycloakSession session, ComponentModel model) {
-		return new IrodsAuthStorageProvider(irodsAuthStorageProviderConfig);
+		return new IrodsAuthStorageProvider(irodsAuthStorageProviderConfig, session, model);
 	}
 
 	@Override
