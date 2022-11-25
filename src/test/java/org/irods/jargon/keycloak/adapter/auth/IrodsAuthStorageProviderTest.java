@@ -1,20 +1,24 @@
 package org.irods.jargon.keycloak.adapter.auth;
 
-import static org.junit.Assert.*;
 
 import java.util.Properties;
 
 import org.irods.jargon.core.connection.IRODSAccount;
 import org.irods.jargon.core.pub.IRODSFileSystem;
+import org.irods.jargon.core.pub.UserAO;
+import org.irods.jargon.core.pub.domain.User;
+import org.irods.jargon.keycloak.adapter.auth.model.IrodsUserModel;
 import org.irods.jargon.testutils.TestingPropertiesHelper;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.keycloak.component.ComponentModel;
+import org.keycloak.credential.CredentialInput;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
+import org.keycloak.models.credential.PasswordCredentialModel;
 import org.mockito.Mockito;
 
 public class IrodsAuthStorageProviderTest {
@@ -47,11 +51,6 @@ public class IrodsAuthStorageProviderTest {
 	}
 
 	@Test
-	public void testGetUserById() {
-		fail("Not yet implemented");
-	}
-
-	@Test
 	public void testGetUserByUsername() {
 		IRODSAccount test1Account = testingPropertiesHelper.buildIRODSAccountFromTestProperties(testingProperties);
 		IrodsAuthStorageProviderFactory irodsAuthStorageProviderFactory = new IrodsAuthStorageProviderFactory();
@@ -64,24 +63,51 @@ public class IrodsAuthStorageProviderTest {
 	
 	}
 
-	@Test
-	public void testGetUserByEmail() {
-		fail("Not yet implemented");
-	}
 
 	@Test
 	public void testSupportsCredentialType() {
-		fail("Not yet implemented");
+		
+		IrodsAuthStorageProviderFactory irodsAuthStorageProviderFactory = new IrodsAuthStorageProviderFactory();
+		KeycloakSession mockKeycloakSession = Mockito.mock(KeycloakSession.class);
+		ComponentModel mockComponentModel = Mockito.mock(ComponentModel.class);
+		IrodsAuthStorageProvider irodsAuthStorageProvider =  irodsAuthStorageProviderFactory.create(mockKeycloakSession, mockComponentModel);
+		boolean supports = irodsAuthStorageProvider.supportsCredentialType(PasswordCredentialModel.TYPE);
+		Assert.assertTrue(supports);
+
 	}
 
 	@Test
-	public void testIsConfiguredFor() {
-		fail("Not yet implemented");
+	public void testIsConfiguredFor() throws Exception {
+		RealmModel realmModel = Mockito.mock(RealmModel.class);
+		IRODSAccount test1Account = testingPropertiesHelper.buildIRODSAccountFromTestProperties(testingProperties);
+		IrodsAuthStorageProviderFactory irodsAuthStorageProviderFactory = new IrodsAuthStorageProviderFactory();
+		KeycloakSession mockKeycloakSession = Mockito.mock(KeycloakSession.class);
+		ComponentModel mockComponentModel = Mockito.mock(ComponentModel.class);
+		UserAO userAO = this.irodsFileSystem.getIRODSAccessObjectFactory().getUserAO(test1Account);
+		User user = userAO.findByName(test1Account.getUserName());
+		UserModel userModel = new IrodsUserModel(mockKeycloakSession, realmModel, mockComponentModel, user);
+		IrodsAuthStorageProvider irodsAuthStorageProvider =  irodsAuthStorageProviderFactory.create(mockKeycloakSession, mockComponentModel);
+		boolean configured = irodsAuthStorageProvider.isConfiguredFor(realmModel,  userModel,  PasswordCredentialModel.TYPE);
+		Assert.assertTrue(configured);
+		
 	}
 
 	@Test
-	public void testIsValid() {
-		fail("Not yet implemented");
+	public void testIsValid() throws Exception {
+		RealmModel realmModel = Mockito.mock(RealmModel.class);
+		IRODSAccount test1Account = testingPropertiesHelper.buildIRODSAccountFromTestProperties(testingProperties);
+		IrodsAuthStorageProviderFactory irodsAuthStorageProviderFactory = new IrodsAuthStorageProviderFactory();
+		KeycloakSession mockKeycloakSession = Mockito.mock(KeycloakSession.class);
+		ComponentModel mockComponentModel = Mockito.mock(ComponentModel.class);
+		UserAO userAO = this.irodsFileSystem.getIRODSAccessObjectFactory().getUserAO(test1Account);
+		User user = userAO.findByName(test1Account.getUserName());
+		UserModel userModel = new IrodsUserModel(mockKeycloakSession, realmModel, mockComponentModel, user);
+		IrodsAuthStorageProvider irodsAuthStorageProvider =  irodsAuthStorageProviderFactory.create(mockKeycloakSession, mockComponentModel);
+		CredentialInput credentialInput = Mockito.mock(CredentialInput.class);
+		Mockito.when(credentialInput.getChallengeResponse()).thenReturn(test1Account.getPassword());
+		boolean valid = irodsAuthStorageProvider.isValid(realmModel,  userModel,  credentialInput);
+		Assert.assertTrue(valid);
+		
 	}
 
 }

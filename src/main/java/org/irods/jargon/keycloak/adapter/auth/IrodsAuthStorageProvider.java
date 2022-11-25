@@ -31,33 +31,32 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * @author conwaymc
- * Provides an implementation of a Keycloak provider that can provide user managment for an underlying iRODS server
+ * @author conwaymc Provides an implementation of a Keycloak provider that can
+ *         provide user managment for an underlying iRODS server
  *
  */
-public class IrodsAuthStorageProvider implements UserStorageProvider, UserLookupProvider, CredentialInputValidator, CredentialInputUpdater {
+public class IrodsAuthStorageProvider
+		implements UserStorageProvider, UserLookupProvider, CredentialInputValidator, CredentialInputUpdater {
 
 	private final IrodsAuthStorageProviderConfig irodsAuthStorageProviderConfig;
 	@SuppressWarnings("unused")
 	private final IRODSFileSystem irodsFileSystem;
 	private final IRODSAccount irodsAccount;
 	private KeycloakSession session;
-    private ComponentModel model;
-    protected Map<String, UserModel> loadedUsers = new HashMap<>();
-
+	private ComponentModel model;
+	protected Map<String, UserModel> loadedUsers = new HashMap<>();
 
 	public static final Logger log = LoggerFactory.getLogger(IrodsAuthStorageProvider.class);
-
 
 	public IrodsAuthStorageProviderConfig getIrodsAuthStorageProviderConfig() {
 		return irodsAuthStorageProviderConfig;
 	}
 
-
 	/**
 	 *
 	 */
-	public IrodsAuthStorageProvider(final IrodsAuthStorageProviderConfig irodsAuthStorageProviderConfig, KeycloakSession session, ComponentModel model) {
+	public IrodsAuthStorageProvider(final IrodsAuthStorageProviderConfig irodsAuthStorageProviderConfig,
+			KeycloakSession session, ComponentModel model) {
 		if (irodsAuthStorageProviderConfig == null) {
 			throw new IllegalArgumentException("null irodsAuthStorageProviderConfig");
 		}
@@ -66,12 +65,12 @@ public class IrodsAuthStorageProvider implements UserStorageProvider, UserLookup
 		this.session = session;
 		this.model = model;
 
-
 		try {
 			this.irodsFileSystem = IRODSFileSystem.instance();
-			this.irodsAccount = IRODSAccount.instance(irodsAuthStorageProviderConfig.getServerName(), irodsAuthStorageProviderConfig.getPort(), irodsAuthStorageProviderConfig.getAdminUserName(),
-					irodsAuthStorageProviderConfig.getAdminPassword(), "", irodsAuthStorageProviderConfig.getZone(), "");
-
+			this.irodsAccount = IRODSAccount.instance(irodsAuthStorageProviderConfig.getServerName(),
+					irodsAuthStorageProviderConfig.getPort(), irodsAuthStorageProviderConfig.getAdminUserName(),
+					irodsAuthStorageProviderConfig.getAdminPassword(), "", irodsAuthStorageProviderConfig.getZone(),
+					"");
 
 		} catch (JargonException e) {
 			log.error("Unable to create IRODSFileSystem", e);
@@ -89,7 +88,7 @@ public class IrodsAuthStorageProvider implements UserStorageProvider, UserLookup
 		log.info("getUserById()");
 		try {
 			StorageId storageId = new StorageId(id);
-	        String username = storageId.getExternalId();
+			String username = storageId.getExternalId();
 			UserAO userAO = this.irodsFileSystem.getIRODSAccessObjectFactory().getUserAO(this.irodsAccount);
 			User user = userAO.findByName(username);
 			UserModel userModel = new IrodsUserModel(this.session, realm, this.model, user);
@@ -140,14 +139,15 @@ public class IrodsAuthStorageProvider implements UserStorageProvider, UserLookup
 		log.info("credentialType:{}", credentialType);
 
 		/*
-		* We will decide if the user is configured for this realm by asking if they exist in iRODS
+		 * We will decide if the user is configured for this realm by asking if they
+		 * exist in iRODS
 		 *
 		 */
 		try {
-		UserAO userAO = this.irodsFileSystem.getIRODSAccessObjectFactory().getUserAO(this.irodsAccount);
-		userAO.findByName(user.getUsername());
-		log.info("user:{} found", user.getUsername());
-		return true;
+			UserAO userAO = this.irodsFileSystem.getIRODSAccessObjectFactory().getUserAO(this.irodsAccount);
+			userAO.findByName(user.getUsername());
+			log.info("user:{} found", user.getUsername());
+			return true;
 		} catch (DataNotFoundException dnf) {
 			log.info("user:{} not found", user.getUsername());
 			return false;
@@ -164,20 +164,21 @@ public class IrodsAuthStorageProvider implements UserStorageProvider, UserLookup
 		log.info("realm:{}", realm);
 		log.info("user:{}", user);
 		log.info("credentialInput:{}", credentialInput);
-		
+
 		/*
-		 * This method attempts an iRODS login for the given user, If I don't get an exception I know it's a good user/pwd
-		 * successful irods login = isValid
+		 * This method attempts an iRODS login for the given user, If I don't get an
+		 * exception I know it's a good user/pwd successful irods login = isValid
 		 */
-		
+
 		IRODSAccount irodsAccount = null;
 
 		try {
-		 irodsAccount = IRODSAccount.instance(irodsAuthStorageProviderConfig.getServerName(), irodsAuthStorageProviderConfig.getPort(), user.getUsername(),
-				credentialInput.getChallengeResponse(), "", irodsAuthStorageProviderConfig.getZone(), "");
-		 this.irodsFileSystem.getIRODSAccessObjectFactory().getEnvironmentalInfoAO(irodsAccount);
-		 return true;
-		} catch (AuthenticationException  ae) {
+			irodsAccount = IRODSAccount.instance(irodsAuthStorageProviderConfig.getServerName(),
+					irodsAuthStorageProviderConfig.getPort(), user.getUsername(),
+					credentialInput.getChallengeResponse(), "", irodsAuthStorageProviderConfig.getZone(), "");
+			this.irodsFileSystem.getIRODSAccessObjectFactory().getEnvironmentalInfoAO(irodsAccount);
+			return true;
+		} catch (AuthenticationException ae) {
 			log.warn("auth failed");
 			return false;
 		} catch (JargonException e) {
@@ -187,26 +188,22 @@ public class IrodsAuthStorageProvider implements UserStorageProvider, UserLookup
 			// don't leak connections
 			this.irodsFileSystem.closeAndEatExceptions(irodsAccount);
 		}
-		
-	}
 
+	}
 
 	@Override
 	public boolean updateCredential(RealmModel realm, UserModel user, CredentialInput input) {
 		return false;
 	}
 
-
 	@Override
 	public void disableCredentialType(RealmModel realm, UserModel user, String credentialType) {
-		
-	}
 
+	}
 
 	@Override
 	public Set<String> getDisableableCredentialTypes(RealmModel realm, UserModel user) {
 		return null;
 	}
-
 
 }
